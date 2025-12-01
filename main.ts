@@ -82,7 +82,6 @@ namespace lichtsensor {
     //% hell.min=0 hell.max=255 hell.defl=150
     //% weight=85 group="Schwellenwerte"
     //% advanced=true
-    //% inlineInputMode=inline
     export function setzeLichtschwellen(dunkel: number, hell: number): void {
         schwelleDunkel = dunkel;
         schwelleHell = hell;
@@ -117,6 +116,28 @@ namespace lichtsensor {
     }
 
     /**
+     * Gibt den aktuellen Dunkel-Schwellenwert zurück (zum Debuggen)
+     */
+    //% blockId=lichtsensor_dunkel_schwelle
+    //% block="Dunkel-Schwelle"
+    //% weight=70 group="Schwellenwerte"
+    //% advanced=true
+    export function dunkelSchwelle(): number {
+        return schwelleDunkel;
+    }
+
+    /**
+     * Gibt den aktuellen Hell-Schwellenwert zurück (zum Debuggen)
+     */
+    //% blockId=lichtsensor_hell_schwelle
+    //% block="Hell-Schwelle"
+    //% weight=69 group="Schwellenwerte"
+    //% advanced=true
+    export function hellSchwelle(): number {
+        return schwelleHell;
+    }
+
+    /**
      * Prüft ob es aktuell dunkel ist
      */
     //% blockId=lichtsensor_ist_dunkel
@@ -147,17 +168,14 @@ namespace lichtsensor {
                 const level = input.lightLevel();
                 let aktuellerZustand: LichtZustand = null;
 
-                // Universelle Logik: Funktioniert mit und ohne Hysterese
+                // Schwellenwert-Logik (funktioniert mit und ohne Hysterese)
                 if (level <= schwelleDunkel) {
                     aktuellerZustand = LichtZustand.Dunkel;
                 } else if (level >= schwelleHell) {
                     aktuellerZustand = LichtZustand.Hell;
                 }
-                // Wenn schwelleHell == schwelleDunkel (kein Hysterese):
-                //   → Entweder dunkel ODER hell
-                // Wenn schwelleHell > schwelleDunkel (mit Hysterese):
-                //   → Zwischen Schwellen: aktuellerZustand bleibt null
-                //   → Kein Event wird ausgelöst
+                // Bei unterschiedlichen Schwellen: Hysterese-Bereich dazwischen
+                // Bei gleichen Schwellen: Entweder dunkel (<=) oder hell (>=)
 
                 // Event nur bei Zustandswechsel auslösen
                 if (aktuellerZustand !== null && 
