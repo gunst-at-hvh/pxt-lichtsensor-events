@@ -2,10 +2,16 @@
 
 // Referenzlicht setzen (Schüler messen vorher mit Lichtwert-Block)
 // Beispiel: Gemessener Wert ist 180, Abstand standardmäßig 10
+// Schwellenwert wird: 180 - 10 = 170
+// ≤ 170: dunkel, > 170: hell
 lichtsensor.setzeReferenzlicht(180);
 
-// Mit individuellem Abstand (optional)
-// lichtsensor.setzeReferenzlicht(180, 20);
+// HINWEIS: Dieser Block nutzt KEINE Hysterese!
+// Bei Lichtwerten genau am Schwellenwert (z.B. 170) kann es flackern.
+// Das ist didaktisch gewollt - Schüler sollen das Problem erleben!
+
+// Für stabile Erkennung mit Hysterese:
+// lichtsensor.setzeLichtschwellen(170, 180);
 
 // Event-Handler registrieren
 lichtsensor.wennLichtWechselt(LichtZustand.Dunkel, function() {

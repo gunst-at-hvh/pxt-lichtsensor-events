@@ -63,15 +63,52 @@ lichtsensor.wennLichtWechselt(LichtZustand.Hell, function () {
 - Hand über den Sensor halten
 - Sensor unter den Tisch
 - Taschenlampe draufleuchten
+- **Langsam die Hand nähern/entfernen**
 
 **Beobachtung:**
-- Ab wann schaltet "dunkel"?
-- Ab wann schaltet zurück auf "hell"?
-- Was passiert bei mittleren Lichtwerten?
+- Ab wann schaltet "dunkel"? → Bei Schwellenwert (z.B. 170)
+- Ab wann schaltet zurück auf "hell"? → Bei Schwellenwert + 1 (z.B. 171)
+- ⚠️ **Was passiert wenn Licht genau am Schwellenwert ist?** → FLACKERN!
+
+**Didaktisches Ziel:**
+Die Schüler sollen das **Flackern-Problem** selbst entdecken! 💡
 
 ---
 
-### Phase 5: Experimentieren (Optional, 10 Min)
+### Phase 5: Problem erkennen & Hysterese verstehen (10 Min)
+
+**Beobachtung gemeinsam besprechen:**
+> "Was ist euch aufgefallen wenn das Licht genau bei 170 liegt?"
+> → Antwort: "Es wechselt ständig zwischen dunkel und hell!"
+
+**Problem verdeutlichen:**
+```
+Lichtwert: 169 → 171 → 170 → 171 → 170
+           ↓     ↓     ↓     ↓     ↓
+Zustand:   dunkel hell dunkel hell dunkel
+```
+
+**Fachbegriff einführen: HYSTERESE**
+
+> "Damit das nicht passiert, brauchen wir einen **Puffer** zwischen den beiden Zuständen. Das nennt man **Hysterese**!"
+
+**Lösung zeigen (Experten-Blöcke):**
+
+```blocks
+// OHNE Hysterese (einfacher Block):
+lichtsensor.setzeReferenzlicht(180)
+// Schwellenwert = 170
+// ≤170 dunkel, >170 hell → FLACKERT!
+
+// MIT Hysterese (Experten-Block):
+lichtsensor.setzeLichtschwellen(170, 180)
+// ≤170 dunkel, ≥180 hell
+// 171-179 → Keine Änderung! → STABIL!
+```
+
+---
+
+### Phase 6: Experimentieren mit Hysterese (Optional, 10 Min)
 **Aufgabe:** "Ändert den Abstand und testet was passiert!"
 
 ```blocks
@@ -136,14 +173,20 @@ lichtsensor.setzeReferenzlicht(180, 30)
 
 ### Häufige Schülerfragen
 
+**"Warum wechselt es die ganze Zeit hin und her?"**
+→ Perfekt! Das ist genau das Problem, das wir lösen wollen. Das nennt man **Flackern**. Dafür gibt es die **Hysterese**!
+
 **"Warum nicht einfach einen Wert für hell und einen für dunkel?"**
-→ Genau das macht man bei manueller Konfiguration (unter "Mehr...")! Aber mit Referenzwert ist es einfacher: Schüler messen einmal und der Calliope rechnet automatisch.
+→ Genau so macht man es! Das sind die Experten-Blöcke unter "Mehr...". Mit dem einfachen Block lernt ihr erst das Problem kennen.
 
 **"Was ist dieser Abstand?"**
-→ Das ist die **Hysterese** - wie viel dunkler es werden muss. Ohne Hysterese würde der Sensor bei kleinen Schwankungen ständig hin- und herspringen!
+→ Der Abstand berechnet den **Schwellenwert**. Bei Referenz 180 und Abstand 10 ist der Schwellenwert 170. Alles ≤170 ist dunkel, >170 ist hell.
 
 **"Warum steht da ein Plus-Zeichen?"**
 → Das bedeutet: Der Abstand ist **optional**. Standardmäßig ist er 10. Ihr könnt ihn ändern wenn ihr wollt!
+
+**"Wie stoppe ich das Flackern?"**
+→ Mit den Experten-Blöcken unter "Mehr..."! Dort könnt ihr zwei unterschiedliche Schwellenwerte einstellen - das macht eine **Hysterese**.
 
 ---
 
@@ -168,22 +211,27 @@ lichtsensor.setzeReferenzlicht(180, 30)
 - ✅ Event-Handler programmiert
 - ✅ Funktioniert beim Testen
 - ✅ Fachbegriff "Referenzwert" verwendet
+- ⭐ **Flackern-Problem erkannt**
+- ⭐ **Hysterese verstanden**
 
 ### Prozess
 - ✅ Systematisches Vorgehen
 - ✅ Fehlersuche bei Problemen
 - ✅ Experimentierfreude
 - ✅ Dokumentation der Werte
+- ⭐ **Problem-Lösungs-Kompetenz**
 
 ---
 
 ## 🎓 Weiterführende Fragen
 
 **Für schnelle Schüler:**
-1. Was passiert wenn Referenzlicht = 10 und Abstand = 20?
-2. Kann man auch mehrere Events gleichzeitig auslösen?
-3. Wie könnte man einen Dämmerungsschalter bauen?
-4. Was ist der Unterschied zwischen "ist dunkel" (Bedingung) und "wenn Licht dunkel" (Event)?
+1. **Warum flackert der Sensor am Schwellenwert?** → Lichtwert springt hin und her
+2. **Wie kann man das Flackern vermeiden?** → Zwei unterschiedliche Schwellenwerte (Hysterese)
+3. **Was ist der Vorteil von Hysterese?** → Stabileres Schaltverhalten
+4. **Wo wird Hysterese noch verwendet?** → Thermostate, Türöffner, Alarmanlagen...
+5. Was ist der Unterschied zwischen "ist dunkel" (Bedingung) und "wenn Licht dunkel" (Event)?
+6. Wie könnte man einen Dämmerungsschalter bauen?
 
 ---
 

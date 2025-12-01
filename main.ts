@@ -46,9 +46,9 @@ namespace lichtsensor {
     }
 
     /**
-     * Setzt das Referenzlicht (Hell-Wert) und den Abstand für Dunkel
+     * Setzt das Referenzlicht und berechnet den Schwellenwert
      * @param referenz der gemessene Referenzwert für helles Licht (0-255)
-     * @param abstand wie viel dunkler es werden muss für "dunkel" (Standard: 10)
+     * @param abstand wie viel dunkler der Schwellenwert sein soll (Standard: 10)
      */
     //% blockId=lichtsensor_set_reference
     //% block="setze Referenzlicht $referenz || Abstand $abstand"
@@ -57,11 +57,17 @@ namespace lichtsensor {
     //% expandableArgumentMode="toggle"
     //% weight=95 group="Schwellenwerte"
     export function setzeReferenzlicht(referenz: number, abstand: number = 10): void {
-        schwelleHell = referenz;
-        schwelleDunkel = referenz - abstand;
-        // Sicherstellen dass Dunkel-Schwelle nicht negativ wird
+        // Berechne Schwellenwert
+        const schwellenwert = referenz - abstand;
+        
+        // Setze beide Schwellen auf denselben Wert (KEINE Hysterese!)
+        schwelleHell = schwellenwert;
+        schwelleDunkel = schwellenwert;
+        
+        // Sicherstellen dass Schwellenwert nicht negativ wird
         if (schwelleDunkel < 0) {
             schwelleDunkel = 0;
+            schwelleHell = 0;
         }
     }
 
@@ -127,7 +133,7 @@ namespace lichtsensor {
     //% block="ist hell"
     //% weight=84 group="Schwellenwerte"
     export function istHell(): boolean {
-        return input.lightLevel() >= schwelleHell;
+        return input.lightLevel() > schwelleHell;
     }
 
     // Interne Polling-Funktion
@@ -141,17 +147,17 @@ namespace lichtsensor {
                 const level = input.lightLevel();
                 let aktuellerZustand: LichtZustand = null;
 
-                // Zustand basierend auf Schwellenwerten bestimmen
-                // Hysterese: Werte zwischen Schwellen lösen kein Event aus
+                // Zustand basierend auf Schwellenwert bestimmen
+                // OHNE Hysterese: Genau ein Schwellenwert
                 if (level <= schwelleDunkel) {
                     aktuellerZustand = LichtZustand.Dunkel;
-                } else if (level >= schwelleHell) {
+                } else {
+                    // level > schwellenwert
                     aktuellerZustand = LichtZustand.Hell;
                 }
 
                 // Event nur bei Zustandswechsel auslösen
-                if (aktuellerZustand !== null && 
-                    aktuellerZustand !== letzterZustand) {
+                if (aktuellerZustand !== letzterZustand) {
                     letzterZustand = aktuellerZustand;
                     control.raiseEvent(LICHT_EVENT_ID, aktuellerZustand);
                 }

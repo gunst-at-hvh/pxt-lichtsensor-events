@@ -114,27 +114,39 @@ lichtsensor.setzeReferenzlicht(180, 20)
 
 ## 💡 Warum diese Struktur?
 
-### Vorteile des Referenzwert-Ansatzes
+### Vorteile des Referenzwert-Ansatzes OHNE Hysterese
 
-1. **Schülerzentriert**
+1. **Didaktisch wertvoll** ⭐⭐⭐
+   - Schüler erleben das **Flackern-Problem** selbst
+   - Sie verstehen WARUM Hysterese wichtig ist
+   - Problem-based Learning: Problem → Erkenntnis → Lösung
+
+2. **Schülerzentriert**
    - Schüler messen selbst
    - Direkter Bezug zur Realität
    - Aktive Auseinandersetzung
 
-2. **Fachlich korrekt**
+3. **Fachlich korrekt**
    - "Referenzwert" ist echter Fachbegriff
    - Kalibrierung wird praktisch erlebt
    - Messtechnik-Grundlagen werden vermittelt
 
-3. **Einfacher zu verstehen**
+4. **Einfacher zu verstehen**
    - Nur 1 Wert eingeben (statt 2)
    - Automatische Berechnung
-   - Hysterese wird automatisch erstellt
+   - Klare Regel: ≤ Schwellenwert = dunkel
 
-4. **Flexibel**
-   - Standardwert (Abstand 10) funktioniert gut
-   - Fortgeschrittene können Abstand anpassen
-   - Alte Blöcke bleiben für Experten verfügbar
+5. **Flexibel**
+   - Standardwert (Abstand 10) funktioniert
+   - Fortgeschrittene können Experten-Blöcke nutzen
+   - Alte Blöcke bleiben für Hysterese verfügbar
+
+### Das "Flackern" ist GEWOLLT! 💡
+
+**Ohne Flackern kein Lernen:**
+- Schüler erleben das Problem → Verstehen die Notwendigkeit
+- Dann nutzen sie Experten-Blöcke → Lösen das Problem selbst
+- Klassisches didaktisches Prinzip: "Problem → Lösung"
 
 ---
 
@@ -147,7 +159,7 @@ lichtsensor.setzeReferenzlicht(180, 20)
 
 2️⃣ KALIBRIEREN
    → "setze Referenzlicht 180"
-   → Calliope berechnet: Hell=180, Dunkel=170
+   → Calliope berechnet: Schwellenwert = 170
 
 3️⃣ PROGRAMMIEREN
    → "wenn Licht dunkel" → Aktion
@@ -155,11 +167,20 @@ lichtsensor.setzeReferenzlicht(180, 20)
 
 4️⃣ TESTEN
    → Hand über Sensor
-   → Funktioniert!
+   → ⚠️ Bei Schwellenwert: FLACKERN!
 
-5️⃣ EXPERIMENTIEREN (Optional)
-   → Abstand ändern (5, 10, 20, 30...)
-   → Unterschiede beobachten
+5️⃣ PROBLEM ERKENNEN
+   → "Warum wechselt es ständig?"
+   → Diskussion über Ursache
+
+6️⃣ HYSTERESE LERNEN
+   → Fachbegriff einführen
+   → Experten-Blöcke zeigen
+   → Problem gelöst!
+
+7️⃣ EXPERIMENTIEREN (Optional)
+   → Mit Hysterese arbeiten
+   → Unterschiede verstehen
 ```
 
 ---

@@ -25,10 +25,11 @@ basic.forever(function() {
 
 ### 2. Referenzlicht einstellen
 
-Den gemessenen Wert als **Referenzlicht** (Hell-Wert) eingeben:
+Den gemessenen Wert als **Referenzlicht** eingeben. Der Schwellenwert wird automatisch berechnet:
 
 ```blocks
 // Gemessener Wert z.B. 180
+// Schwellenwert wird: 180 - 10 = 170
 lichtsensor.setzeReferenzlicht(180)
 ```
 
@@ -36,13 +37,17 @@ lichtsensor.setzeReferenzlicht(180)
 
 ```blocks
 // Mit größerem Abstand (20 Stufen dunkler)
+// Schwellenwert wird: 180 - 20 = 160
 lichtsensor.setzeReferenzlicht(180, 20)
 ```
 
 **Was bedeutet das?**
-- **Referenzlicht 180** = Hell-Schwelle
-- **Abstand 10** = Dunkel wird bei 180 - 10 = 170 erkannt
-- **Hysterese** = 10 Stufen zwischen Hell und Dunkel
+- **Referenzlicht 180** = Das gemessene helle Licht
+- **Abstand 10** = Schwellenwert wird 170
+- **≤ 170** = dunkel
+- **> 170** = hell
+
+**⚠️ Wichtig:** Dieser Block nutzt **KEINEN Hysterese-Puffer**! Bei Lichtwerten genau am Schwellenwert kann es flackern. Für stabilere Erkennung nutze die Experten-Blöcke unter "Mehr..."!
 
 ### 3. Licht-Events registrieren
 
@@ -101,38 +106,73 @@ basic.forever(function () {
 
 ## Funktionsweise
 
-Die Extension nutzt Background-Polling mit 100ms Intervall. **Hysterese** (Schaltdifferenz) zwischen den Schwellenwerten verhindert schnelles Hin- und Herspringen bei Grenzwerten.
+Die Extension nutzt Background-Polling mit 100ms Intervall. 
 
-### Wie funktioniert der Referenzwert?
+### Wie funktioniert der Referenzwert? (Einfacher Block)
+
+Der einfache `setze Referenzlicht`-Block nutzt **EINEN einzelnen Schwellenwert** ohne Hysterese-Puffer:
 
 ```
 Beispiel: Referenzlicht = 180, Abstand = 10
+Schwellenwert = 180 - 10 = 170
 
 ┌─────────────────────────────────────┐
 │ Lichtwert (0-255)                   │
 ├─────────────────────────────────────┤
 │ 255 ┃                               │
-│     ┃  ☀ HELL                       │
-│ 180 ╋━━━━━━━━━━ Referenzlicht       │
+│     ┃  ☀ HELL (> 170)               │
 │     ┃                               │
+│ 170 ╋━━━━━━━━━━ Schwellenwert       │
+│     ┃  🌙 DUNKEL (≤ 170)            │
+│     ┃                               │
+│   0 ┃                               │
+└─────────────────────────────────────┘
+
+≤ 170 → dunkel
+> 170 → hell
+```
+
+**⚠️ Problem bei Schwankungen:**
+```
+Lichtwert: 169 → 171 → 170 → 171 → 170
+Zustand:   dunkel hell dunkel hell dunkel
+           → FLACKERN! 💥
+```
+
+### Warum ist das didaktisch sinnvoll?
+
+**Lernziel:** Schüler erleben selbst, warum Hysterese wichtig ist!
+
+1. ✅ Schüler programmieren mit einfachem Block
+2. ⚠️ Sie beobachten Flackern bei Grenzwerten
+3. 💡 Sie verstehen: "Wir brauchen einen Puffer!"
+4. 🔧 Sie nutzen Experten-Blöcke für Hysterese
+
+### Für stabile Licht-Erkennung: Experten-Blöcke nutzen!
+
+Die Experten-Blöcke unter "Mehr..." erlauben **zwei unterschiedliche Schwellenwerte** mit Hysterese:
+
+```
+Mit Hysterese (Experten-Block):
+┌─────────────────────────────────────┐
+│ 180 ╋━━━━━━━━━━ Hell-Schwelle       │
 │     ┃ ╔═══════════════════╗         │
 │     ┃ ║ HYSTERESE (10)    ║         │
 │     ┃ ╚═══════════════════╝         │
 │ 170 ╋━━━━━━━━━━ Dunkel-Schwelle     │
-│     ┃  🌙 DUNKEL                    │
-│   0 ┃                               │
 └─────────────────────────────────────┘
 
-Hell-Schwelle  = Referenzlicht = 180
-Dunkel-Schwelle = Referenzlicht - Abstand = 170
+≤ 170 → dunkel
+≥ 180 → hell
+171-179 → KEINE ÄNDERUNG (stabil!)
 ```
 
-**Standard-Werte:**
-- Referenzlicht: 150 (wird von Schülern gemessen)
-- Abstand: 10 (optional anpassbar)
-- **Hysterese-Bereich**: 10 Stufen
+**Standard-Werte (Experten-Blöcke):**
+- Dunkel: ≤ 50
+- Hell: ≥ 150
+- **Hysterese-Bereich** (51-149): Keine Zustandsänderung
 
-Dieses Verhalten entspricht einem **Schwellenwertschalter** mit Hysterese und vermeidet unerwünschte Mehrfachschaltungen bei Schwankungen um einen Grenzwert.
+Dieses Verhalten entspricht einem **Schwellenwertschalter** mit Hysterese (auch **Schmitt-Trigger** genannt) und vermeidet unerwünschte Mehrfachschaltungen.
 
 ## Lizenz
 
