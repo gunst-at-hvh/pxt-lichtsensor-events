@@ -46,14 +46,52 @@ namespace lichtsensor {
     }
 
     /**
-     * Setzt den Schwellenwert für einen Lichtzustand
+     * Setzt das Referenzlicht (Hell-Wert) und den Abstand für Dunkel
+     * @param referenz der gemessene Referenzwert für helles Licht (0-255)
+     * @param abstand wie viel dunkler es werden muss für "dunkel" (Standard: 10)
+     */
+    //% blockId=lichtsensor_set_reference
+    //% block="setze Referenzlicht $referenz || Abstand $abstand"
+    //% referenz.min=0 referenz.max=255 referenz.defl=150
+    //% abstand.min=1 abstand.max=100 abstand.defl=10
+    //% expandableArgumentMode="toggle"
+    //% weight=95 group="Schwellenwerte"
+    export function setzeReferenzlicht(referenz: number, abstand: number = 10): void {
+        schwelleHell = referenz;
+        schwelleDunkel = referenz - abstand;
+        // Sicherstellen dass Dunkel-Schwelle nicht negativ wird
+        if (schwelleDunkel < 0) {
+            schwelleDunkel = 0;
+        }
+    }
+
+    /**
+     * Setzt beide Schwellenwerte einzeln (für Fortgeschrittene)
+     * @param dunkel Schwellenwert für dunkel (0-255)
+     * @param hell Schwellenwert für hell (0-255)
+     */
+    //% blockId=lichtsensor_set_thresholds
+    //% block="setze Lichtschwellen dunkel $dunkel hell $hell"
+    //% dunkel.min=0 dunkel.max=255 dunkel.defl=50
+    //% hell.min=0 hell.max=255 hell.defl=150
+    //% weight=85 group="Schwellenwerte"
+    //% advanced=true
+    //% inlineInputMode=inline
+    export function setzeLichtschwellen(dunkel: number, hell: number): void {
+        schwelleDunkel = dunkel;
+        schwelleHell = hell;
+    }
+
+    /**
+     * Setzt den Schwellenwert für einen Lichtzustand einzeln
      * @param zustand der Zustand für den der Schwellenwert gilt
      * @param wert Schwellenwert (0-255)
      */
     //% blockId=lichtsensor_set_threshold
     //% block="setze $zustand Schwellenwert auf $wert"
     //% wert.min=0 wert.max=255 wert.defl=100
-    //% weight=90 group="Schwellenwerte"
+    //% weight=80 group="Schwellenwerte"
+    //% advanced=true
     export function setzeSchwellenwert(zustand: LichtZustand, wert: number): void {
         if (zustand === LichtZustand.Dunkel) {
             schwelleDunkel = wert;
@@ -67,7 +105,7 @@ namespace lichtsensor {
      */
     //% blockId=lichtsensor_wert
     //% block="Lichtwert"
-    //% weight=85 group="Schwellenwerte"
+    //% weight=90 group="Schwellenwerte"
     export function lichtwert(): number {
         return input.lightLevel();
     }
@@ -77,7 +115,7 @@ namespace lichtsensor {
      */
     //% blockId=lichtsensor_ist_dunkel
     //% block="ist dunkel"
-    //% weight=80 group="Schwellenwerte"
+    //% weight=85 group="Schwellenwerte"
     export function istDunkel(): boolean {
         return input.lightLevel() <= schwelleDunkel;
     }
@@ -87,7 +125,7 @@ namespace lichtsensor {
      */
     //% blockId=lichtsensor_ist_hell
     //% block="ist hell"
-    //% weight=79 group="Schwellenwerte"
+    //% weight=84 group="Schwellenwerte"
     export function istHell(): boolean {
         return input.lightLevel() >= schwelleHell;
     }

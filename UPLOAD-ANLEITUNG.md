@@ -33,7 +33,7 @@ Falls nicht installiert: https://git-scm.com/downloads
    git add .
    git commit -m "Initial commit: Lichtsensor Extension"
    git branch -M main
-   git remote add origin https://github.com/DEIN-USERNAME/pxt-lichtsensor-events.git
+   git remote add origin https://github.com/gunst-at-hvh/pxt-lichtsensor-events.git
    git push -u origin main
    ```
    
@@ -53,13 +53,14 @@ Falls nicht installiert: https://git-scm.com/downloads
 
 2. **Dateien einzeln hochladen**
    - Klicke auf "uploading an existing file"
-   - Ziehe alle 6 Dateien rein:
+   - Ziehe alle 7 Dateien rein:
      * `.gitignore`
      * `LICENSE.txt`
      * `README.md`
      * `main.ts`
      * `pxt.json`
      * `test.ts`
+     * `icon.png` ⭐ NEU
    - Commit message: "Initial commit"
    - Klicke "Commit changes"
 

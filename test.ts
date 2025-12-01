@@ -1,8 +1,11 @@
 // Tests für die Lichtsensor-Extension
 
-// Schwellenwerte konfigurieren
-lichtsensor.setzeSchwellenwert(LichtZustand.Dunkel, 30);
-lichtsensor.setzeSchwellenwert(LichtZustand.Hell, 180);
+// Referenzlicht setzen (Schüler messen vorher mit Lichtwert-Block)
+// Beispiel: Gemessener Wert ist 180, Abstand standardmäßig 10
+lichtsensor.setzeReferenzlicht(180);
+
+// Mit individuellem Abstand (optional)
+// lichtsensor.setzeReferenzlicht(180, 20);
 
 // Event-Handler registrieren
 lichtsensor.wennLichtWechselt(LichtZustand.Dunkel, function() {
