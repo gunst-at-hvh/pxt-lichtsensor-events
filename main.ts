@@ -147,17 +147,21 @@ namespace lichtsensor {
                 const level = input.lightLevel();
                 let aktuellerZustand: LichtZustand = null;
 
-                // Zustand basierend auf Schwellenwert bestimmen
-                // OHNE Hysterese: Genau ein Schwellenwert
+                // Universelle Logik: Funktioniert mit und ohne Hysterese
                 if (level <= schwelleDunkel) {
                     aktuellerZustand = LichtZustand.Dunkel;
-                } else {
-                    // level > schwellenwert
+                } else if (level >= schwelleHell) {
                     aktuellerZustand = LichtZustand.Hell;
                 }
+                // Wenn schwelleHell == schwelleDunkel (kein Hysterese):
+                //   → Entweder dunkel ODER hell
+                // Wenn schwelleHell > schwelleDunkel (mit Hysterese):
+                //   → Zwischen Schwellen: aktuellerZustand bleibt null
+                //   → Kein Event wird ausgelöst
 
                 // Event nur bei Zustandswechsel auslösen
-                if (aktuellerZustand !== letzterZustand) {
+                if (aktuellerZustand !== null && 
+                    aktuellerZustand !== letzterZustand) {
                     letzterZustand = aktuellerZustand;
                     control.raiseEvent(LICHT_EVENT_ID, aktuellerZustand);
                 }

@@ -1,5 +1,6 @@
 // Tests für die Lichtsensor-Extension
 
+// === VARIANTE 1: Einfacher Block (ohne Hysterese) ===
 // Referenzlicht setzen (Schüler messen vorher mit Lichtwert-Block)
 // Beispiel: Gemessener Wert ist 180, Abstand standardmäßig 10
 // Schwellenwert wird: 180 - 10 = 170
@@ -10,8 +11,10 @@ lichtsensor.setzeReferenzlicht(180);
 // Bei Lichtwerten genau am Schwellenwert (z.B. 170) kann es flackern.
 // Das ist didaktisch gewollt - Schüler sollen das Problem erleben!
 
-// Für stabile Erkennung mit Hysterese:
+// === VARIANTE 2: Mit Hysterese (stabil) ===
+// Wenn Flackern auftritt, Experten-Block nutzen:
 // lichtsensor.setzeLichtschwellen(170, 180);
+// Reihenfolge ist egal - funktioniert auch nach setzeReferenzlicht()!
 
 // Event-Handler registrieren
 lichtsensor.wennLichtWechselt(LichtZustand.Dunkel, function() {

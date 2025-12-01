@@ -49,6 +49,8 @@ lichtsensor.setzeReferenzlicht(180, 20)
 
 **⚠️ Wichtig:** Dieser Block nutzt **KEINEN Hysterese-Puffer**! Bei Lichtwerten genau am Schwellenwert kann es flackern. Für stabilere Erkennung nutze die Experten-Blöcke unter "Mehr..."!
 
+**💡 Tipp:** Die Blöcke können in beliebiger Reihenfolge verwendet werden. Du kannst jederzeit zwischen einfachem und Experten-Block wechseln!
+
 ### 3. Licht-Events registrieren
 
 ```blocks
