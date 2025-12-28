@@ -5,6 +5,7 @@ namespace lichtsensor {
     let schwelleDunkel = 50
     let schwelleHell = 50
     let letzterZustand: LichtZustand | null = null
+    let autoReCheckAktiv = false  // NEU: Verhindert Endlos-Schleife!
 
     export enum LichtZustand {
         //% block="dunkel"
@@ -65,25 +66,34 @@ namespace lichtsensor {
             handler()
             
             // SOFORT nach Handler: Prüfe ob Zustand sich geändert hat
-            control.runInBackground(() => {
-                basic.pause(10)  // Kurz warten damit Handler sicher fertig
+            // ABER: Nur wenn nicht schon ein Auto-ReCheck läuft!
+            if (!autoReCheckAktiv) {
+                autoReCheckAktiv = true  // Sperre aktivieren
                 
-                const level = input.lightLevel()
-                let neuerZustand: LichtZustand | null = null
-                
-                // Zustand prüfen
-                if (level <= schwelleDunkel) {
-                    neuerZustand = LichtZustand.Dunkel
-                } else if (level >= schwelleHell) {
-                    neuerZustand = LichtZustand.Hell
-                }
-                
-                // Wenn Zustand sich geändert hat → Event sofort feuern!
-                if (neuerZustand !== null && neuerZustand !== letzterZustand) {
-                    letzterZustand = neuerZustand
-                    control.raiseEvent(LICHTSENSOR_ID, neuerZustand)
-                }
-            })
+                control.runInBackground(() => {
+                    basic.pause(10)  // Kurz warten damit Handler sicher fertig
+                    
+                    const level = input.lightLevel()
+                    let neuerZustand: LichtZustand | null = null
+                    
+                    // Zustand prüfen
+                    if (level <= schwelleDunkel) {
+                        neuerZustand = LichtZustand.Dunkel
+                    } else if (level >= schwelleHell) {
+                        neuerZustand = LichtZustand.Hell
+                    }
+                    
+                    // Wenn Zustand sich geändert hat → Event sofort feuern!
+                    if (neuerZustand !== null && neuerZustand !== letzterZustand) {
+                        letzterZustand = neuerZustand
+                        control.raiseEvent(LICHTSENSOR_ID, neuerZustand)
+                    }
+                    
+                    // Nach 500ms Sperre wieder freigeben
+                    basic.pause(500)
+                    autoReCheckAktiv = false
+                })
+            }
         })
     }
 
@@ -94,21 +104,24 @@ namespace lichtsensor {
         basic.pause(100)
         
         while (true) {
-            const level = input.lightLevel()
-            let aktuellerZustand: LichtZustand | null = null
+            // NUR prüfen wenn KEIN Auto-ReCheck läuft!
+            if (!autoReCheckAktiv) {
+                const level = input.lightLevel()
+                let aktuellerZustand: LichtZustand | null = null
 
-            // Schwellenwert-Logik (deine originale Logik!)
-            if (level <= schwelleDunkel) {
-                aktuellerZustand = LichtZustand.Dunkel
-            } else if (level >= schwelleHell) {
-                aktuellerZustand = LichtZustand.Hell
-            }
+                // Schwellenwert-Logik (deine originale Logik!)
+                if (level <= schwelleDunkel) {
+                    aktuellerZustand = LichtZustand.Dunkel
+                } else if (level >= schwelleHell) {
+                    aktuellerZustand = LichtZustand.Hell
+                }
 
-            // Event nur bei Zustandswechsel auslösen
-            if (aktuellerZustand !== null && 
-                aktuellerZustand !== letzterZustand) {
-                letzterZustand = aktuellerZustand
-                control.raiseEvent(LICHTSENSOR_ID, aktuellerZustand)
+                // Event nur bei Zustandswechsel auslösen
+                if (aktuellerZustand !== null && 
+                    aktuellerZustand !== letzterZustand) {
+                    letzterZustand = aktuellerZustand
+                    control.raiseEvent(LICHTSENSOR_ID, aktuellerZustand)
+                }
             }
 
             basic.pause(50)  // Schneller Check (50ms)
