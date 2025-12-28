@@ -14,14 +14,17 @@ enum LichtZustand {
 //% color=#f59e42 weight=100 icon="\uf0eb" block="Lichtsensor"
 //% groups=['Ereignisse', 'Schwellenwerte']
 namespace lichtsensor {
-    // Event-Quelle ID (benutzerdefiniert, muss einzigartig sein)
-    const LICHT_EVENT_ID = 0x6001;
-
     // Schwellenwert-Speicher
     let schwelleDunkel = 50;
     let schwelleHell = 150;
     let letzterZustand: LichtZustand = null;
-    let pollingGestartet = false;
+    
+    // Handler-Speicher (statt Event-System!)
+    let dunkelHandler: () => void = null;
+    let hellHandler: () => void = null;
+    
+    // Flag: Läuft gerade ein Handler?
+    let handlerLäuft = false;
 
     /**
      * Wird ausgeführt wenn sich der Licht-Zustand ändert
@@ -35,13 +38,11 @@ namespace lichtsensor {
         zustand: LichtZustand, 
         handler: () => void
     ): void {
-        // Event-Handler registrieren
-        control.onEvent(LICHT_EVENT_ID, zustand, handler);
-        
-        // Polling starten (nur einmal)
-        if (!pollingGestartet) {
-            pollingGestartet = true;
-            startePolling();
+        // Handler speichern (NICHT als Event registrieren!)
+        if (zustand === LichtZustand.Dunkel) {
+            dunkelHandler = handler;
+        } else {
+            hellHandler = handler;
         }
     }
 
@@ -69,6 +70,9 @@ namespace lichtsensor {
             schwelleDunkel = 0;
             schwelleHell = 0;
         }
+        
+        // Reset Zustand
+        letzterZustand = null;
     }
 
     /**
@@ -157,36 +161,44 @@ namespace lichtsensor {
         return input.lightLevel() > schwelleHell;
     }
 
-    // Interne Polling-Funktion
-    function startePolling(): void {
-        control.inBackground(() => {
-            // Erster Aufruf aktiviert Sensor
-            input.lightLevel();
-            basic.pause(100);
-            
-            while (true) {
+    // Background-Loop: Wie if-else, nicht wie Event-Queue!
+    control.inBackground(() => {
+        // Erster Aufruf aktiviert Sensor
+        input.lightLevel();
+        basic.pause(100);
+        
+        while (true) {
+            // Nur prüfen wenn kein Handler läuft (if-else Logik!)
+            if (!handlerLäuft) {
                 const level = input.lightLevel();
                 let aktuellerZustand: LichtZustand = null;
 
-                // Schwellenwert-Logik (funktioniert mit und ohne Hysterese)
+                // Zustand bestimmen
                 if (level <= schwelleDunkel) {
                     aktuellerZustand = LichtZustand.Dunkel;
                 } else if (level >= schwelleHell) {
                     aktuellerZustand = LichtZustand.Hell;
                 }
-                // Bei unterschiedlichen Schwellen: Hysterese-Bereich dazwischen
-                // Bei gleichen Schwellen: Entweder dunkel (<=) oder hell (>=)
 
-                // Event nur bei Zustandswechsel auslösen
+                // Wenn Zustand sich geändert hat → Handler DIREKT aufrufen!
                 if (aktuellerZustand !== null && 
                     aktuellerZustand !== letzterZustand) {
+                    
                     letzterZustand = aktuellerZustand;
-                    control.raiseEvent(LICHT_EVENT_ID, aktuellerZustand);
+                    handlerLäuft = true;  // Sperre aktivieren
+                    
+                    // Handler DIREKT aufrufen (keine Event-Queue!)
+                    if (aktuellerZustand === LichtZustand.Dunkel && dunkelHandler !== null) {
+                        dunkelHandler();
+                    } else if (aktuellerZustand === LichtZustand.Hell && hellHandler !== null) {
+                        hellHandler();
+                    }
+                    
+                    handlerLäuft = false;  // Sperre freigeben
                 }
-
-                // Polling-Intervall (100ms = 10 Prüfungen/Sekunde)
-                basic.pause(100);
             }
-        });
-    }
+
+            basic.pause(100);
+        }
+    });
 }
