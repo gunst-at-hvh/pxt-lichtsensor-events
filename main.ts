@@ -1,17 +1,48 @@
-namespace lichtsensor {
-    const LICHTSENSOR_ID = 3200
-    
-    // Schwellenwerte (deine originale Logik!)
-    let schwelleDunkel = 50
-    let schwelleHell = 50
-    let letzterZustand: LichtZustand | null = null
-    let autoReCheckAktiv = false  // NEU: Verhindert Endlos-Schleife!
+/**
+ * Licht-Zustände für Event-Handler
+ */
+enum LichtZustand {
+    //% block="dunkel"
+    Dunkel = 1,
+    //% block="hell"
+    Hell = 2
+}
 
-    export enum LichtZustand {
-        //% block="dunkel"
-        Dunkel = 1,
-        //% block="hell"
-        Hell = 2
+/**
+ * Lichtsensor-Ereignisse für Calliope mini
+ */
+//% color=#f59e42 weight=100 icon="\uf0eb" block="Lichtsensor"
+//% groups=['Ereignisse', 'Schwellenwerte']
+namespace lichtsensor {
+    // Event-Quelle ID (benutzerdefiniert, muss einzigartig sein)
+    const LICHT_EVENT_ID = 0x6001;
+
+    // Schwellenwert-Speicher
+    let schwelleDunkel = 50;
+    let schwelleHell = 150;
+    let letzterZustand: LichtZustand = null;
+    let pollingGestartet = false;
+
+    /**
+     * Wird ausgeführt wenn sich der Licht-Zustand ändert
+     * @param zustand der zu erkennende Lichtzustand
+     * @param handler Code der ausgeführt wird
+     */
+    //% blockId=lichtsensor_on_changed
+    //% block="wenn Licht $zustand"
+    //% weight=100 group="Ereignisse"
+    export function wennLichtWechselt(
+        zustand: LichtZustand, 
+        handler: () => void
+    ): void {
+        // Event-Handler registrieren
+        control.onEvent(LICHT_EVENT_ID, zustand, handler);
+        
+        // Polling starten (nur einmal)
+        if (!pollingGestartet) {
+            pollingGestartet = true;
+            startePolling();
+        }
     }
 
     /**
@@ -19,112 +50,143 @@ namespace lichtsensor {
      * @param referenz der gemessene Referenzwert für helles Licht (0-255)
      * @param abstand wie viel dunkler der Schwellenwert sein soll (Standard: 10)
      */
-    //% block="setze Referenzlicht auf $referenz || Abstand $abstand"
-    //% referenz.min=0 referenz.max=255 referenz.defl=128
+    //% blockId=lichtsensor_set_reference
+    //% block="setze Referenzlicht $referenz || Abstand $abstand"
+    //% referenz.min=0 referenz.max=255 referenz.defl=150
     //% abstand.min=1 abstand.max=100 abstand.defl=10
     //% expandableArgumentMode="toggle"
-    //% weight=100
-    //% color=#FFA500
+    //% weight=95 group="Schwellenwerte"
     export function setzeReferenzlicht(referenz: number, abstand: number = 10): void {
         // Berechne Schwellenwert
-        const schwellenwert = referenz - abstand
+        const schwellenwert = referenz - abstand;
         
         // Setze beide Schwellen auf denselben Wert (KEINE Hysterese!)
-        schwelleHell = schwellenwert
-        schwelleDunkel = schwellenwert
+        schwelleHell = schwellenwert;
+        schwelleDunkel = schwellenwert;
         
         // Sicherstellen dass Schwellenwert nicht negativ wird
         if (schwelleDunkel < 0) {
-            schwelleDunkel = 0
-            schwelleHell = 0
+            schwelleDunkel = 0;
+            schwelleHell = 0;
         }
-        
-        // Reset Zustand nach Kalibrierung
-        letzterZustand = null
+    }
+
+    /**
+     * Setzt beide Schwellenwerte einzeln (für Fortgeschrittene)
+     * @param dunkel Schwellenwert für dunkel (0-255)
+     * @param hell Schwellenwert für hell (0-255)
+     */
+    //% blockId=lichtsensor_set_thresholds
+    //% block="setze Lichtschwellen dunkel $dunkel hell $hell"
+    //% dunkel.min=0 dunkel.max=255 dunkel.defl=50
+    //% hell.min=0 hell.max=255 hell.defl=150
+    //% weight=85 group="Schwellenwerte"
+    //% advanced=true
+    export function setzeLichtschwellen(dunkel: number, hell: number): void {
+        schwelleDunkel = dunkel;
+        schwelleHell = hell;
+    }
+
+    /**
+     * Setzt den Schwellenwert für einen Lichtzustand einzeln
+     * @param zustand der Zustand für den der Schwellenwert gilt
+     * @param wert Schwellenwert (0-255)
+     */
+    //% blockId=lichtsensor_set_threshold
+    //% block="setze $zustand Schwellenwert auf $wert"
+    //% wert.min=0 wert.max=255 wert.defl=100
+    //% weight=80 group="Schwellenwerte"
+    //% advanced=true
+    export function setzeSchwellenwert(zustand: LichtZustand, wert: number): void {
+        if (zustand === LichtZustand.Dunkel) {
+            schwelleDunkel = wert;
+        } else {
+            schwelleHell = wert;
+        }
     }
 
     /**
      * Gibt den aktuellen Lichtwert zurück (0-255)
      */
+    //% blockId=lichtsensor_wert
     //% block="Lichtwert"
-    //% weight=90
-    //% color=#FFA500
+    //% weight=90 group="Schwellenwerte"
     export function lichtwert(): number {
-        return input.lightLevel()
+        return input.lightLevel();
     }
 
     /**
-     * Event das feuert wenn sich der Lichtzustand ändert
-     * Nach dem Handler wird automatisch geprüft ob sich der Zustand geändert hat!
+     * Gibt den aktuellen Dunkel-Schwellenwert zurück (zum Debuggen)
      */
-    //% block="wenn Licht $zustand"
-    //% weight=80
-    //% color=#FFA500
-    export function wennLichtWechselt(zustand: LichtZustand, handler: () => void): void {
-        control.onEvent(LICHTSENSOR_ID, zustand, () => {
-            // SuS-Handler ausführen (kann lange dauern!)
-            handler()
-            
-            // SOFORT nach Handler: Prüfe ob Zustand sich geändert hat
-            // ABER: Nur wenn nicht schon ein Auto-ReCheck läuft!
-            if (!autoReCheckAktiv) {
-                autoReCheckAktiv = true  // Sperre aktivieren
-                
-                control.runInBackground(() => {
-                    basic.pause(10)  // Kurz warten damit Handler sicher fertig
-                    
-                    const level = input.lightLevel()
-                    let neuerZustand: LichtZustand | null = null
-                    
-                    // Zustand prüfen
-                    if (level <= schwelleDunkel) {
-                        neuerZustand = LichtZustand.Dunkel
-                    } else if (level >= schwelleHell) {
-                        neuerZustand = LichtZustand.Hell
-                    }
-                    
-                    // Wenn Zustand sich geändert hat → Event sofort feuern!
-                    if (neuerZustand !== null && neuerZustand !== letzterZustand) {
-                        letzterZustand = neuerZustand
-                        control.raiseEvent(LICHTSENSOR_ID, neuerZustand)
-                    }
-                    
-                    // Nach 500ms Sperre wieder freigeben
-                    basic.pause(500)
-                    autoReCheckAktiv = false
-                })
-            }
-        })
+    //% blockId=lichtsensor_dunkel_schwelle
+    //% block="Dunkel-Schwelle"
+    //% weight=70 group="Schwellenwerte"
+    //% advanced=true
+    export function dunkelSchwelle(): number {
+        return schwelleDunkel;
     }
 
-    // Kontinuierliche Überwachung (läuft immer im Hintergrund)
-    control.inBackground(() => {
-        // Erster Aufruf aktiviert Sensor
-        input.lightLevel()
-        basic.pause(100)
-        
-        while (true) {
-            // NUR prüfen wenn KEIN Auto-ReCheck läuft!
-            if (!autoReCheckAktiv) {
-                const level = input.lightLevel()
-                let aktuellerZustand: LichtZustand | null = null
+    /**
+     * Gibt den aktuellen Hell-Schwellenwert zurück (zum Debuggen)
+     */
+    //% blockId=lichtsensor_hell_schwelle
+    //% block="Hell-Schwelle"
+    //% weight=69 group="Schwellenwerte"
+    //% advanced=true
+    export function hellSchwelle(): number {
+        return schwelleHell;
+    }
 
-                // Schwellenwert-Logik (deine originale Logik!)
+    /**
+     * Prüft ob es aktuell dunkel ist
+     */
+    //% blockId=lichtsensor_ist_dunkel
+    //% block="ist dunkel"
+    //% weight=85 group="Schwellenwerte"
+    export function istDunkel(): boolean {
+        return input.lightLevel() <= schwelleDunkel;
+    }
+
+    /**
+     * Prüft ob es aktuell hell ist
+     */
+    //% blockId=lichtsensor_ist_hell
+    //% block="ist hell"
+    //% weight=84 group="Schwellenwerte"
+    export function istHell(): boolean {
+        return input.lightLevel() > schwelleHell;
+    }
+
+    // Interne Polling-Funktion
+    function startePolling(): void {
+        control.inBackground(() => {
+            // Erster Aufruf aktiviert Sensor
+            input.lightLevel();
+            basic.pause(100);
+            
+            while (true) {
+                const level = input.lightLevel();
+                let aktuellerZustand: LichtZustand = null;
+
+                // Schwellenwert-Logik (funktioniert mit und ohne Hysterese)
                 if (level <= schwelleDunkel) {
-                    aktuellerZustand = LichtZustand.Dunkel
+                    aktuellerZustand = LichtZustand.Dunkel;
                 } else if (level >= schwelleHell) {
-                    aktuellerZustand = LichtZustand.Hell
+                    aktuellerZustand = LichtZustand.Hell;
                 }
+                // Bei unterschiedlichen Schwellen: Hysterese-Bereich dazwischen
+                // Bei gleichen Schwellen: Entweder dunkel (<=) oder hell (>=)
 
                 // Event nur bei Zustandswechsel auslösen
                 if (aktuellerZustand !== null && 
                     aktuellerZustand !== letzterZustand) {
-                    letzterZustand = aktuellerZustand
-                    control.raiseEvent(LICHTSENSOR_ID, aktuellerZustand)
+                    letzterZustand = aktuellerZustand;
+                    control.raiseEvent(LICHT_EVENT_ID, aktuellerZustand);
                 }
-            }
 
-            basic.pause(50)  // Schneller Check (50ms)
-        }
-    })
+                // Polling-Intervall (100ms = 10 Prüfungen/Sekunde)
+                basic.pause(100);
+            }
+        });
+    }
 }
