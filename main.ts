@@ -19,7 +19,7 @@ namespace lichtsensor {
     let schwelleHell = 150;
     let letzterZustand: LichtZustand = null;
     
-    // Handler-Speicher (statt Event-System!)
+    // Handler-Speicher (Flag-System!)
     let dunkelHandler: () => void = null;
     let hellHandler: () => void = null;
     
@@ -38,7 +38,7 @@ namespace lichtsensor {
         zustand: LichtZustand, 
         handler: () => void
     ): void {
-        // Handler speichern (NICHT als Event registrieren!)
+        // Handler speichern (Flag-System, keine Events!)
         if (zustand === LichtZustand.Dunkel) {
             dunkelHandler = handler;
         } else {
@@ -161,44 +161,58 @@ namespace lichtsensor {
         return input.lightLevel() > schwelleHell;
     }
 
-    // Background-Loop: Wie if-else, nicht wie Event-Queue!
+    /**
+     * Interne Funktion: Führt Handler aus und prüft danach sofort nochmal
+     */
+    function führeHandlerAus(zustand: LichtZustand): void {
+        handlerLäuft = true;
+        
+        // Handler ausführen
+        if (zustand === LichtZustand.Dunkel && dunkelHandler !== null) {
+            dunkelHandler();
+        } else if (zustand === LichtZustand.Hell && hellHandler !== null) {
+            hellHandler();
+        }
+        
+        handlerLäuft = false;
+        
+        // SOFORT nach Handler: Nochmal prüfen!
+        basic.pause(10);  // Kurz warten
+        prüfeUndReagiere();  // Rekursiv prüfen!
+    }
+
+    /**
+     * Interne Funktion: Prüft Zustand und führt Handler aus wenn nötig
+     */
+    function prüfeUndReagiere(): void {
+        if (handlerLäuft) return;  // Sicherheit gegen Endlos-Rekursion
+        
+        const level = input.lightLevel();
+        let aktuellerZustand: LichtZustand = null;
+
+        // Zustand bestimmen
+        if (level <= schwelleDunkel) {
+            aktuellerZustand = LichtZustand.Dunkel;
+        } else if (level >= schwelleHell) {
+            aktuellerZustand = LichtZustand.Hell;
+        }
+
+        // Wenn Zustand sich geändert hat → Handler ausführen!
+        if (aktuellerZustand !== null && aktuellerZustand !== letzterZustand) {
+            letzterZustand = aktuellerZustand;
+            führeHandlerAus(aktuellerZustand);
+        }
+    }
+
+    // Background-Loop: Schneller Check + Flag-System
     control.inBackground(() => {
         // Erster Aufruf aktiviert Sensor
         input.lightLevel();
         basic.pause(100);
         
         while (true) {
-            // Nur prüfen wenn kein Handler läuft (if-else Logik!)
-            if (!handlerLäuft) {
-                const level = input.lightLevel();
-                let aktuellerZustand: LichtZustand = null;
-
-                // Zustand bestimmen
-                if (level <= schwelleDunkel) {
-                    aktuellerZustand = LichtZustand.Dunkel;
-                } else if (level >= schwelleHell) {
-                    aktuellerZustand = LichtZustand.Hell;
-                }
-
-                // Wenn Zustand sich geändert hat → Handler DIREKT aufrufen!
-                if (aktuellerZustand !== null && 
-                    aktuellerZustand !== letzterZustand) {
-                    
-                    letzterZustand = aktuellerZustand;
-                    handlerLäuft = true;  // Sperre aktivieren
-                    
-                    // Handler DIREKT aufrufen (keine Event-Queue!)
-                    if (aktuellerZustand === LichtZustand.Dunkel && dunkelHandler !== null) {
-                        dunkelHandler();
-                    } else if (aktuellerZustand === LichtZustand.Hell && hellHandler !== null) {
-                        hellHandler();
-                    }
-                    
-                    handlerLäuft = false;  // Sperre freigeben
-                }
-            }
-
-            basic.pause(100);
+            prüfeUndReagiere();
+            basic.pause(20);  // Schneller Check (20ms)
         }
     });
 }
