@@ -59,7 +59,7 @@ namespace lichtsensor {
     //% weight=95 group="Schwellenwerte"
     export function setzeReferenzlicht(normalHelligkeit: number, abstand: number = 10): void {
         // Berechne Schwellenwert
-        const schwellenwert = hellWert - abstand;
+        const schwellenwert = normalHelligkeit - abstand;
         
         // Setze beide Schwellen auf denselben Wert (KEINE Hysterese!)
         schwelleHell = schwellenwert;
