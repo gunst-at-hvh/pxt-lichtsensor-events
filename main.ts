@@ -47,17 +47,17 @@ namespace lichtsensor {
     }
 
     /**
-     * Speichert den Hell-Wert (normale Helligkeit) und berechnet den Schwellenwert
-     * @param hellWert der gemessene Wert für normale Helligkeit (0-255)
+     * Speichert die Normal-Helligkeit (wie hell es ist wenn Licht an ist) und berechnet den Schwellenwert
+     * @param normalHelligkeit die gemessene Helligkeit im hellen Raum (0-255)
      * @param abstand wie viel dunkler der Schwellenwert sein soll (Standard: 10)
      */
     //% blockId=lichtsensor_set_reference
-    //% block="speichere Hell-Wert $hellWert || Abstand $abstand"
-    //% hellWert.min=0 hellWert.max=255 hellWert.defl=150
+    //% block="speichere Normal-Helligkeit $normalHelligkeit || Abstand $abstand"
+    //% normalHelligkeit.min=0 normalHelligkeit.max=255 normalHelligkeit.defl=150
     //% abstand.min=1 abstand.max=100 abstand.defl=10
     //% expandableArgumentMode="toggle"
     //% weight=95 group="Schwellenwerte"
-    export function setzeReferenzlicht(hellWert: number, abstand: number = 10): void {
+    export function setzeReferenzlicht(normalHelligkeit: number, abstand: number = 10): void {
         // Berechne Schwellenwert
         const schwellenwert = hellWert - abstand;
         
