@@ -1,5 +1,5 @@
 /**
- * Licht-Zustände für Event-Handler
+ * Licht-Zustände für Ereignis-Handler
  */
 enum LichtZustand {
     //% block="dunkel"
@@ -47,19 +47,19 @@ namespace lichtsensor {
     }
 
     /**
-     * Setzt das Referenzlicht und berechnet den Schwellenwert
-     * @param referenz der gemessene Referenzwert für helles Licht (0-255)
+     * Speichert den Hell-Wert (normale Helligkeit) und berechnet den Schwellenwert
+     * @param hellWert der gemessene Wert für normale Helligkeit (0-255)
      * @param abstand wie viel dunkler der Schwellenwert sein soll (Standard: 10)
      */
     //% blockId=lichtsensor_set_reference
-    //% block="setze Referenzlicht $referenz || Abstand $abstand"
-    //% referenz.min=0 referenz.max=255 referenz.defl=150
+    //% block="speichere Hell-Wert $hellWert || Abstand $abstand"
+    //% hellWert.min=0 hellWert.max=255 hellWert.defl=150
     //% abstand.min=1 abstand.max=100 abstand.defl=10
     //% expandableArgumentMode="toggle"
     //% weight=95 group="Schwellenwerte"
-    export function setzeReferenzlicht(referenz: number, abstand: number = 10): void {
+    export function setzeReferenzlicht(hellWert: number, abstand: number = 10): void {
         // Berechne Schwellenwert
-        const schwellenwert = referenz - abstand;
+        const schwellenwert = hellWert - abstand;
         
         // Setze beide Schwellen auf denselben Wert (KEINE Hysterese!)
         schwelleHell = schwellenwert;
@@ -177,15 +177,15 @@ namespace lichtsensor {
         handlerLäuft = false;
         
         // SOFORT nach Handler: Nochmal prüfen!
-        basic.pause(10);  // Kurz warten
-        prüfeUndReagiere();  // Rekursiv prüfen!
+        basic.pause(10);
+        prüfeUndReagiere();
     }
 
     /**
      * Interne Funktion: Prüft Zustand und führt Handler aus wenn nötig
      */
     function prüfeUndReagiere(): void {
-        if (handlerLäuft) return;  // Sicherheit gegen Endlos-Rekursion
+        if (handlerLäuft) return;
         
         const level = input.lightLevel();
         let aktuellerZustand: LichtZustand = null;
@@ -204,7 +204,7 @@ namespace lichtsensor {
         }
     }
 
-    // Background-Loop: Schneller Check + Flag-System
+    // Background-Loop: Schneller Check + Flag-System + Auto-ReCheck
     control.inBackground(() => {
         // Erster Aufruf aktiviert Sensor
         input.lightLevel();
@@ -212,7 +212,7 @@ namespace lichtsensor {
         
         while (true) {
             prüfeUndReagiere();
-            basic.pause(20);  // Schneller Check (20ms)
+            basic.pause(20);
         }
     });
 }
