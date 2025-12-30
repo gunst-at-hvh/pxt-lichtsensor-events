@@ -1,20 +1,24 @@
 {
-    "name": "lichtsensor-events",
-    "version": "0.2.0",
-    "description": "Licht-Ereignisse mit Schwellenwerten für Calliope mini",
-    "license": "MIT",
-    "author": "",
+    "name": "pxt-lichtsensor-events",
+    "version": "0.0.4",
+    "description": "Event-basierte Lichtsensor-Steuerung mit Hysterese für den Calliope mini",
     "dependencies": {
-        "core": "*"
+        "core": "*",
+        "radio": "*",
+        "microphone": "*"
     },
     "files": [
-        "README.md",
-        "main.ts"
+        "main.blocks",
+        "main.ts",
+        "README.md"
     ],
     "testFiles": [
         "test.ts"
     ],
-    "public": true,
+    "targetVersions": {
+        "target": "6.0.18",
+        "targetId": "calliopemini"
+    },
     "supportedTargets": [
         "calliopemini"
     ],
